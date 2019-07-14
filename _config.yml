@@ -37,7 +37,10 @@ ga:
     host: auto  
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> e5f60fa0a5b6ab70e94fce1934e0f7e9ac63c203
 permalink: /:year/:month/:title/
 # Format
 highlighter: rouge
