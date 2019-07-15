@@ -23,7 +23,7 @@ Scrapy-redis提供了下面四种组件（components）：(四种组件意味着
 
 ## scrapy-redis架构
 
-![img](E:/tipFiger.github.io/_posts/scrapy-redis.png)
+![img](https://github.com/tipFiger/tipFiger.github.io/tree/master/images/scrapy-redis.png)
 
 如上图所⽰示，scrapy-redis在scrapy的架构上增加了redis，基于redis的特性拓展了如下组件：
 
@@ -87,7 +87,7 @@ Scrapy中用集合实现这个request去重功能，Scrapy中把已经发送的r
 - `Master端`(核心服务器) ：使用 Windows 10，搭建一个Redis数据库，不负责爬取，只负责url指纹判重、Request的分配，以及数据的存储
 - `Slaver端`(爬虫程序执行端) ：使用 Mac OS X 、Ubuntu 16.04、CentOS 7.2，负责执行爬虫程序，运行过程中提交新的Request给Master
 
-![img](E:/tipFiger.github.io/_posts/masterAndslaver.png)
+![img](https://github.com/tipFiger/tipFiger.github.io/tree/master/images/masterAndslaver.png)
 
 1. 首先Slaver端从Master端拿任务（Request、url）进行数据抓取，Slaver抓取数据的同时，产生新任务的Request便提交给 Master 处理；
 2. Master端只有一个Redis数据库，负责将未处理的Request去重和任务分配，将处理后的Request加入待爬队列，并且存储爬取的数据。
@@ -191,9 +191,9 @@ appendonly no
 
 > 下载地址：[https://redisdesktop.com/download](https://legacy.gitbook.com/book/fategithub/pythonspider/edit#)
 
-![img](E:/tipFiger.github.io/_posts/redisDesktop.png)
+![img](https://github.com/tipFiger/tipFiger.github.io/tree/master/images/redisDesktop.png)
 
-![img](E:/tipFiger.github.io/_posts/useRedisDesktop.png)
+![img](https://github.com/tipFiger/tipFiger.github.io/tree/master/images/useRedisDesktop.png)
 
 ### 五、Redis的数据类型
 
