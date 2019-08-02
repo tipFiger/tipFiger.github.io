@@ -1,0 +1,356 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" lang="zh_Hans">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>django.db.models.functions.text &#8212; Django 2.1.8.dev20190330215650 文档</title>
+    <link rel="stylesheet" href="../../../../../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../../../_static/language_data.js"></script>
+    <link rel="index" title="索引" href="../../../../../genindex.html" />
+    <link rel="search" title="搜索" href="../../../../../search.html" />
+
+
+
+ 
+<script type="text/javascript" src="../../../../../templatebuiltins.js"></script>
+<script type="text/javascript">
+(function($) {
+    if (!django_template_builtins) {
+       // templatebuiltins.js missing, do nothing.
+       return;
+    }
+    $(document).ready(function() {
+        // Hyperlink Django template tags and filters
+        var base = "../../../../../ref/templates/builtins.html";
+        if (base == "#") {
+            // Special case for builtins.html itself
+            base = "";
+        }
+        // Tags are keywords, class '.k'
+        $("div.highlight\\-html\\+django span.k").each(function(i, elem) {
+             var tagname = $(elem).text();
+             if ($.inArray(tagname, django_template_builtins.ttags) != -1) {
+                 var fragment = tagname.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + tagname + "</a>");
+             }
+        });
+        // Filters are functions, class '.nf'
+        $("div.highlight\\-html\\+django span.nf").each(function(i, elem) {
+             var filtername = $(elem).text();
+             if ($.inArray(filtername, django_template_builtins.tfilters) != -1) {
+                 var fragment = filtername.replace(/_/, '-');
+                 $(elem).html("<a href='" + base + "#" + fragment + "'>" + filtername + "</a>");
+             }
+        });
+    });
+})(jQuery);</script>
+
+  </head><body>
+
+    <div class="document">
+  <div id="custom-doc" class="yui-t6">
+    <div id="hd">
+      <h1><a href="../../../../../index.html">Django 2.1.8.dev20190330215650 文档</a></h1>
+      <div id="global-nav">
+        <a title="Home page" href="../../../../../index.html">Home</a>  |
+        <a title="Table of contents" href="../../../../../contents.html">Table of contents</a>  |
+        <a title="Global index" href="../../../../../genindex.html">Index</a>  |
+        <a title="Module index" href="../../../../../py-modindex.html">Modules</a>
+      </div>
+      <div class="nav">
+    <a href="../../../../index.html" title="模块代码" accesskey="U">up</a></div>
+    </div>
+
+    <div id="bd">
+      <div id="yui-main">
+        <div class="yui-b">
+          <div class="yui-g" id="_modules-django-db-models-functions-text">
+            
+  <h1>django.db.models.functions.text 源代码</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">django.db.models</span> <span class="k">import</span> <span class="n">Func</span><span class="p">,</span> <span class="n">IntegerField</span><span class="p">,</span> <span class="n">Transform</span><span class="p">,</span> <span class="n">Value</span><span class="p">,</span> <span class="n">fields</span>
+<span class="kn">from</span> <span class="nn">django.db.models.functions</span> <span class="k">import</span> <span class="n">Coalesce</span>
+
+
+<span class="k">class</span> <span class="nc">BytesToCharFieldConversionMixin</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convert CharField results from bytes to str.</span>
+
+<span class="sd">    MySQL returns long data types (bytes) instead of chars when it can&#39;t</span>
+<span class="sd">    determine the length of the result string. For example:</span>
+<span class="sd">        LPAD(column1, CHAR_LENGTH(column2), &#39; &#39;)</span>
+<span class="sd">    returns the LONGTEXT (bytes) instead of VARCHAR.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">convert_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">connection</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">db_functions_convert_bytes_to_str</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_field</span><span class="o">.</span><span class="n">get_internal_type</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;CharField&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">convert_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">connection</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Chr"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Chr">[文档]</a><span class="k">class</span> <span class="nc">Chr</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;CHR&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;chr&#39;</span>
+
+    <span class="k">def</span> <span class="nf">as_mysql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span>
+            <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;CHAR&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(function)s</span><span class="s1">(</span><span class="si">%(expressions)s</span><span class="s1"> USING utf16)&#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_oracle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(function)s</span><span class="s1">(</span><span class="si">%(expressions)s</span><span class="s1"> USING NCHAR_CS)&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_sqlite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;CHAR&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">ConcatPair</span><span class="p">(</span><span class="n">Func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Concatenate two arguments together. This is used by `Concat` because not</span>
+<span class="sd">    all backend databases support more than two arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;CONCAT&#39;</span>
+
+    <span class="k">def</span> <span class="nf">as_sqlite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="n">coalesced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coalesce</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">ConcatPair</span><span class="p">,</span> <span class="n">coalesced</span><span class="p">)</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span>
+            <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(expressions)s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">arg_joiner</span><span class="o">=</span><span class="s1">&#39; || &#39;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_mysql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="c1"># Use CONCAT_WS with an empty separator so that NULLs are ignored.</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span>
+            <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;CONCAT_WS&#39;</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="s2">&quot;</span><span class="si">%(function)s</span><span class="s2">(&#39;&#39;, </span><span class="si">%(expressions)s</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">coalesce</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># null on either side results in null for expression, wrap with coalesce</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">expressions</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">Coalesce</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">Value</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">))</span> <span class="k">for</span> <span class="n">expression</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">get_source_expressions</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">set_source_expressions</span><span class="p">(</span><span class="n">expressions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">c</span>
+
+
+<div class="viewcode-block" id="Concat"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Concat">[文档]</a><span class="k">class</span> <span class="nc">Concat</span><span class="p">(</span><span class="n">Func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Concatenate text fields together. Backends that result in an entire</span>
+<span class="sd">    null expression when any arguments are null will wrap each argument in</span>
+<span class="sd">    coalesce functions to ensure a non-null result.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%(expressions)s</span><span class="s2">&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">expressions</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">expressions</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Concat must take at least two expressions&#39;</span><span class="p">)</span>
+        <span class="n">paired</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paired</span><span class="p">(</span><span class="n">expressions</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">paired</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_paired</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expressions</span><span class="p">):</span>
+        <span class="c1"># wrap pairs of expressions in successive concat functions</span>
+        <span class="c1"># exp = [a, b, c, d]</span>
+        <span class="c1"># -&gt; ConcatPair(a, ConcatPair(b, ConcatPair(c, d))))</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">expressions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ConcatPair</span><span class="p">(</span><span class="o">*</span><span class="n">expressions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ConcatPair</span><span class="p">(</span><span class="n">expressions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paired</span><span class="p">(</span><span class="n">expressions</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span></div>
+
+
+<div class="viewcode-block" id="Left"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Left">[文档]</a><span class="k">class</span> <span class="nc">Left</span><span class="p">(</span><span class="n">Func</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;LEFT&#39;</span>
+    <span class="n">arity</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        expression: the name of a field, or an expression returning a string</span>
+<span class="sd">        length: the number of characters to return from the start of the string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="s1">&#39;resolve_expression&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;length&#39; must be greater than 0.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_substr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Substr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_expressions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Value</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_expressions</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">use_substr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_substr</span><span class="p">()</span><span class="o">.</span><span class="n">as_oracle</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">)</span>
+
+    <span class="n">as_oracle</span> <span class="o">=</span> <span class="n">use_substr</span>
+    <span class="n">as_sqlite</span> <span class="o">=</span> <span class="n">use_substr</span></div>
+
+
+<div class="viewcode-block" id="Length"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Length">[文档]</a><span class="k">class</span> <span class="nc">Length</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Return the number of characters in the expression.&quot;&quot;&quot;</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;LENGTH&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;length&#39;</span>
+    <span class="n">output_field</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">as_mysql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;CHAR_LENGTH&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Lower"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Lower">[文档]</a><span class="k">class</span> <span class="nc">Lower</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;LOWER&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;lower&#39;</span></div>
+
+
+<div class="viewcode-block" id="LPad"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.LPad">[文档]</a><span class="k">class</span> <span class="nc">LPad</span><span class="p">(</span><span class="n">BytesToCharFieldConversionMixin</span><span class="p">,</span> <span class="n">Func</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;LPAD&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">fill_text</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">),</span> <span class="o">**</span><span class="n">extra</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">length</span><span class="p">,</span> <span class="s1">&#39;resolve_expression&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">length</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;length&#39; must be greater or equal to 0.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">length</span><span class="p">,</span> <span class="n">fill_text</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LTrim"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.LTrim">[文档]</a><span class="k">class</span> <span class="nc">LTrim</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;LTRIM&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;ltrim&#39;</span></div>
+
+
+<div class="viewcode-block" id="Ord"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Ord">[文档]</a><span class="k">class</span> <span class="nc">Ord</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;ASCII&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;ord&#39;</span>
+    <span class="n">output_field</span> <span class="o">=</span> <span class="n">IntegerField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">as_mysql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;ORD&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_sqlite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;UNICODE&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Repeat"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Repeat">[文档]</a><span class="k">class</span> <span class="nc">Repeat</span><span class="p">(</span><span class="n">BytesToCharFieldConversionMixin</span><span class="p">,</span> <span class="n">Func</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;REPEAT&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">number</span><span class="p">,</span> <span class="s1">&#39;resolve_expression&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">number</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;number&#39; must be greater or equal to 0.&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">number</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_oracle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">):</span>
+        <span class="n">expression</span><span class="p">,</span> <span class="n">number</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_expressions</span>
+        <span class="n">rpad</span> <span class="o">=</span> <span class="n">RPad</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">Length</span><span class="p">(</span><span class="n">expression</span><span class="p">)</span> <span class="o">*</span> <span class="n">number</span><span class="p">,</span> <span class="n">expression</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">rpad</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_context</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Replace"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Replace">[文档]</a><span class="k">class</span> <span class="nc">Replace</span><span class="p">(</span><span class="n">Func</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;REPLACE&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="n">Value</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">),</span> <span class="o">**</span><span class="n">extra</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">expression</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Right"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Right">[文档]</a><span class="k">class</span> <span class="nc">Right</span><span class="p">(</span><span class="n">Left</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;RIGHT&#39;</span>
+
+    <span class="k">def</span> <span class="nf">get_substr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Substr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">source_expressions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_expressions</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">Value</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="RPad"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.RPad">[文档]</a><span class="k">class</span> <span class="nc">RPad</span><span class="p">(</span><span class="n">LPad</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;RPAD&#39;</span></div>
+
+
+<div class="viewcode-block" id="RTrim"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.RTrim">[文档]</a><span class="k">class</span> <span class="nc">RTrim</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;RTRIM&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;rtrim&#39;</span></div>
+
+
+<div class="viewcode-block" id="StrIndex"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.StrIndex">[文档]</a><span class="k">class</span> <span class="nc">StrIndex</span><span class="p">(</span><span class="n">Func</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Return a positive integer corresponding to the 1-indexed position of the</span>
+<span class="sd">    first occurrence of a substring inside another string, or 0 if the</span>
+<span class="sd">    substring is not found.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;INSTR&#39;</span>
+    <span class="n">arity</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">output_field</span> <span class="o">=</span> <span class="n">fields</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">as_postgresql</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;STRPOS&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Substr"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Substr">[文档]</a><span class="k">class</span> <span class="nc">Substr</span><span class="p">(</span><span class="n">Func</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;SUBSTRING&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expression</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">length</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        expression: the name of a field, or an expression returning a string</span>
+<span class="sd">        pos: an integer &gt; 0, or an expression returning an integer</span>
+<span class="sd">        length: an optional number of characters to return</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="s1">&#39;resolve_expression&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">pos</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;pos&#39; must be greater than 0&quot;</span><span class="p">)</span>
+        <span class="n">expressions</span> <span class="o">=</span> <span class="p">[</span><span class="n">expression</span><span class="p">,</span> <span class="n">pos</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">length</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">expressions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">length</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">expressions</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_sqlite</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;SUBSTR&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">as_oracle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">as_sql</span><span class="p">(</span><span class="n">compiler</span><span class="p">,</span> <span class="n">connection</span><span class="p">,</span> <span class="n">function</span><span class="o">=</span><span class="s1">&#39;SUBSTR&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Trim"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Trim">[文档]</a><span class="k">class</span> <span class="nc">Trim</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;TRIM&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;trim&#39;</span></div>
+
+
+<div class="viewcode-block" id="Upper"><a class="viewcode-back" href="../../../../../ref/models/database-functions.html#django.db.models.functions.Upper">[文档]</a><span class="k">class</span> <span class="nc">Upper</span><span class="p">(</span><span class="n">Transform</span><span class="p">):</span>
+    <span class="n">function</span> <span class="o">=</span> <span class="s1">&#39;UPPER&#39;</span>
+    <span class="n">lookup_name</span> <span class="o">=</span> <span class="s1">&#39;upper&#39;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      
+        
+          <div class="yui-b" id="sidebar">
+            
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>快速搜索</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="转向" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+              <h3>Last update:</h3>
+              <p class="topless">3月 30, 2019</p>
+          </div>
+        
+      
+    </div>
+
+    <div id="ft">
+      <div class="nav">
+    <a href="../../../../index.html" title="模块代码" accesskey="U">up</a></div>
+    </div>
+  </div>
+
+      <div class="clearer"></div>
+    </div>
+  </body>
+</html>
